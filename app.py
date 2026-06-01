@@ -13,8 +13,8 @@ load_dotenv()
 # CONFIGURACIÓN DE PÁGINA
 # ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="Formula 101 🏎️",
-    page_icon="🏎️",
+    page_title="Fórmula 101",
+    page_icon="view/logoF101.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -30,13 +30,13 @@ st.markdown(
 
     /* Header principal */
     .f1-header {
-        background: linear-gradient(135deg, #e10600 0%, #1a1a2e 100%);
+        background: linear-gradient(135deg, #1a1a2e 10%, #a81e1e 90%);
         padding: 1.5rem 2rem;
         border-radius: 12px;
         margin-bottom: 1.5rem;
     }
     .f1-header h1 { color: white; margin: 0; font-size: 2rem; }
-    .f1-header p  { color: #ffcc00; margin: 0.3rem 0 0 0; font-size: 0.95rem; }
+    .f1-header p  { color: #fff; margin: 0.3rem 0 0 0; font-size: 0.95rem; }
 
     /* Tool call badge */
     .tool-badge {
@@ -79,7 +79,7 @@ st.markdown(
 # ─────────────────────────────────────────────
 # INICIALIZACIÓN DEL AGENTE (CACHEADO)
 # ─────────────────────────────────────────────
-@st.cache_resource(show_spinner="Iniciando agente Formula 101...")
+@st.cache_resource(show_spinner="Iniciando agente Fórmula 101...")
 def load_agent():
     """Carga el agente y el RAG una sola vez."""
     from agent.rag import get_or_create_vector_store
@@ -93,10 +93,19 @@ def load_agent():
 # ─────────────────────────────────────────────
 # HEADER
 # ─────────────────────────────────────────────
+import base64
+
+def get_image_base64(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+logo_b64 = get_image_base64("view/logoF101.png")
+
 st.markdown(
-    """
+    f"""
 <div class="f1-header">
-    <h1>🏎️ Formula 101</h1>
+    <img src="data:image/png;base64,{logo_b64}" alt="Fórmula 101 Logo" style="width: 300px; vertical-align: middle; margin-top:-50px;margin-bottom:-50px;">
+    <h1>Fórmula 101</h1>
     <p>Agente Inteligente de Fórmula 1 · Powered by LangGraph + Gemini + RAG</p>
 </div>
 """,
@@ -107,6 +116,7 @@ st.markdown(
 # ─────────────────────────────────────────────
 # SIDEBAR
 # ─────────────────────────────────────────────
+
 with st.sidebar:
     st.markdown("## ⚙️ Configuración")
 
@@ -167,7 +177,7 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    st.caption("Formula 101 · Proyecto Final Sistemas Inteligentes · UNAL")
+    st.caption("Fórmula 101 · Proyecto Final Sistemas Inteligentes · UNAL")
 
 
 # ─────────────────────────────────────────────
@@ -192,7 +202,7 @@ with col_chat:
     # Mensaje de bienvenida si no hay historial
     if not st.session_state.messages:
         st.info(
-            "👋 ¡Hola! Soy Formula 101, tu agente experto en Fórmula 1. "
+            "👋 ¡Hola! Soy Fórmula 101, tu agente experto en Fórmula 1. "
             "Puedo consultarle datos en tiempo real, resultados históricos y explicarte "
             "todo sobre el deporte. ¡Pregúntame lo que quieras!"
         )
@@ -361,7 +371,7 @@ with col_tools:
     st.divider()
     st.markdown("#### 🔗 APIs conectadas")
     st.markdown("""
-    - ⚡ **OpenF1** — tiempo real
-    - 📡 **Jolpica/Ergast** — histórico
-    - 🧠 **ChromaDB** — RAG local
+    - **OpenF1** — tiempo real
+    - **Jolpica/Ergast** — histórico
+    - **ChromaDB** — RAG local
     """)
