@@ -83,7 +83,11 @@ class AgentStream:
         messages = _build_messages(self._user_message, self._history)
         seen_tool_ids: set = set()
 
-        for chunk, _ in agent.stream({"messages": messages}, stream_mode="messages"):
+        for chunk, _ in agent.stream(
+            {"messages": messages},
+            stream_mode="messages",
+            config={"recursion_limit": 10},
+        ):
             # ── Capturar tool calls completos (AIMessage con tool_calls) ──────
             complete_tc = getattr(chunk, "tool_calls", None)
             if complete_tc:
@@ -121,7 +125,7 @@ def invoke_agent(user_message: str, history: list = None) -> dict:
     """Invoca el agente y retorna {'answer', 'tool_calls', 'messages'}."""
     agent    = get_agent()
     messages = _build_messages(user_message, history)
-    result   = agent.invoke({"messages": messages})
+    result   = agent.invoke({"messages": messages}, config={"recursion_limit": 10})
 
     all_messages    = result["messages"]
     final_answer    = ""

@@ -149,6 +149,39 @@ def get_drivers_in_session(session_key: int) -> list:
     return [data]
 
 
+# ── TOOL: Buscar sesión por GP ───────────────────────────────────────────────
+
+@tool
+def get_session_by_gp(year: int, country_name: str = None, session_type: str = "Race") -> list:
+    """
+    Busca sesiones de F1 en OpenF1 por año, país y tipo de sesión.
+    Útil para obtener el session_key de un GP específico y luego consultar
+    posiciones, pit stops, tiempos de vuelta, clima, etc.
+    - year: año de la temporada (ej. 2024, 2025)
+    - country_name: nombre del país en inglés (ej. 'Japan', 'Italy', 'Monaco'). Opcional.
+    - session_type: 'Race', 'Qualifying', 'Practice 1', 'Practice 2', 'Practice 3', 'Sprint'
+    """
+    params: dict = {"session_type": session_type, "year": year}
+    if country_name:
+        params["country_name"] = country_name
+    key = f"session_{year}_{country_name}_{session_type}"
+    data = _cached_get(key, f"{OPENF1_BASE}/sessions", params=params, ttl=TTL_HISTORICAL)
+    if isinstance(data, list) and data:
+        return [
+            {
+                "session_key":  s.get("session_key"),
+                "meeting_name": s.get("meeting_name"),
+                "session_name": s.get("session_name"),
+                "country":      s.get("country_name"),
+                "circuit":      s.get("circuit_short_name"),
+                "date_start":   s.get("date_start"),
+                "year":         s.get("year"),
+            }
+            for s in data
+        ]
+    return [{"error": "No se encontraron sesiones con esos parámetros"}]
+
+
 # ── TOOLS: Jolpica / Ergast (histórico) ─────────────────────────────────────
 
 @tool
@@ -262,8 +295,8 @@ def search_f1_knowledge(query: str) -> str:
 
 # ── Lista exportada ──────────────────────────────────────────────────────────
 ALL_TOOLS = [
-    get_latest_session, get_race_positions, get_pit_stops, get_lap_times,
-    get_weather, get_drivers_in_session, get_driver_standings,
+    get_latest_session, get_session_by_gp, get_race_positions, get_pit_stops,
+    get_lap_times, get_weather, get_drivers_in_session, get_driver_standings,
     get_constructor_standings, get_race_results, get_season_schedule,
     get_driver_career, get_qualifying_results, search_f1_knowledge,
 ]

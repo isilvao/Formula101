@@ -84,7 +84,9 @@ def load_agent():
     """Carga el agente y el RAG una sola vez."""
     from agent.rag import get_or_create_vector_store
     from agent.graph import get_agent
+    from agent.tools import _get_retriever
     get_or_create_vector_store()
+    _get_retriever()  # pre-warm: evita recargar el modelo en la primera consulta
     get_agent()
     from agent.graph import AgentStream
     return AgentStream

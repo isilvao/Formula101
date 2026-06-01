@@ -21,13 +21,20 @@ MARKER_FILE   = CHROMA_DIR / ".embedding_model"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 COLLECTION_NAME = "f1_knowledge"
 
+# ── Singletons cacheados en memoria ──────────────────────────────────────────
+_embeddings_instance: HuggingFaceEmbeddings | None = None
+_vector_store_instance: Chroma | None = None
+
 
 def _build_embeddings() -> HuggingFaceEmbeddings:
-    return HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+    global _embeddings_instance
+    if _embeddings_instance is None:
+        _embeddings_instance = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            model_kwargs={"device": "cpu"},
+            encode_kwargs={"normalize_embeddings": True},
+        )
+    return _embeddings_instance
 
 
 def _needs_rebuild() -> bool:
@@ -70,10 +77,15 @@ def get_or_create_vector_store() -> Chroma:
     Retorna el vector store. Lo reconstruye automáticamente si el modelo
     de embeddings cambió o si no existe.
     """
+    global _vector_store_instance
+
+    if _vector_store_instance is not None and not _needs_rebuild():
+        return _vector_store_instance
+
     embeddings = _build_embeddings()
 
     if _needs_rebuild():
-        # Borrar store anterior si existe
+        _vector_store_instance = None
         if CHROMA_DIR.exists():
             shutil.rmtree(CHROMA_DIR)
         CHROMA_DIR.mkdir(parents=True, exist_ok=True)
@@ -81,7 +93,7 @@ def get_or_create_vector_store() -> Chroma:
         print("Construyendo base de conocimiento F1...")
         docs   = _load_documents()
         chunks = _split_documents(docs)
-        vector_store = Chroma.from_documents(
+        _vector_store_instance = Chroma.from_documents(
             documents=chunks,
             embedding=embeddings,
             collection_name=COLLECTION_NAME,
@@ -90,13 +102,13 @@ def get_or_create_vector_store() -> Chroma:
         _write_marker()
         print(f"Base de conocimiento lista: {len(chunks)} chunks de {len(docs)} documentos.")
     else:
-        vector_store = Chroma(
+        _vector_store_instance = Chroma(
             collection_name=COLLECTION_NAME,
             embedding_function=embeddings,
             persist_directory=str(CHROMA_DIR),
         )
 
-    return vector_store
+    return _vector_store_instance
 
 
 def get_retriever(k: int = 4):
